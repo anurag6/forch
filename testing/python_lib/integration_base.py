@@ -4,6 +4,7 @@ import subprocess
 import unittest
 import multiprocessing
 import os
+import requests
 import time
 import yaml
 
@@ -183,6 +184,18 @@ class IntegrationTestBase(unittest.TestCase):
     def get_shared_memory_int_array(self, size):
         """Returns shared memory array of the int type"""
         return self._get_multiprocessing_array('i', size)
+
+    def get_varz_dump(self, location, varz):
+        """Get all values of given varz"""
+        address = 'http://%s' % location
+        response = requests.get(address)
+
+        def format_entry(entry):
+            return entry.replace(varz, '').split()
+
+        varz_dump = [format_entry(entry) for entry in response.text.split('\n')
+                     if varz in entry and '#' not in entry]
+        return dict(varz_dump)
 
 
 if __name__ == '__main__':

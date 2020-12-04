@@ -13,10 +13,11 @@ class FailScaleConfigTest(IntegrationTestBase):
     """Test suite for failure modes during scaling"""
 
     def __init__(self, *args, **kwargs):
+        self.devices = kwargs.pop('devices', 5)
+        self.switches = kwargs.pop('switches', 9)
+
         super().__init__(*args, **kwargs)
 
-        self.devices = 5
-        self.switches = 9
         self.sim_setup_cmd = 'bin/setup_scale'
         self.config_path = '/tmp/scale_config'
 
@@ -32,9 +33,8 @@ class FailScaleConfigTest(IntegrationTestBase):
             'skip-conn-check': False
         })
 
-    def test_stack_connectivity(self):
-        """Test to build stack and check for connectivity"""
-
+    def add_faux_devices(self):
+        """Add faux devices to setup using parallel processes"""
         faux_args = []
         for dev_index in range(self.devices):
             for sw_index in range(1, self.switches + 1):
@@ -45,6 +45,9 @@ class FailScaleConfigTest(IntegrationTestBase):
 
         self.parallelize(self.add_faux, faux_args)
 
+    def test_stack_connectivity(self):
+        """Test to build stack and check for connectivity"""
+        self.add_faux_devices()
         time.sleep(10)
 
         device_list = ['forch-faux-'+str(num) for num in range(1, self.devices * self.switches + 1)]

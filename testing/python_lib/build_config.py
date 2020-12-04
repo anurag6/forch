@@ -127,9 +127,9 @@ class FaucetConfigGenerator():
                 description='IoT Device', native_vlan=native_vlan, acl_in=port_acl,
                 max_hosts=1)
 
-    def _build_datapath_config(self, dp_id, interfaces, mac=None):
+    def _build_datapath_config(self, dp_id, interfaces, mac=None, root=False):
         lldp_beacon = LLDPBeacon(max_per_interval=5, send_interval=5)
-        stack = Stack(priority=1)
+        stack = Stack(priority=1) if root else None
         return Datapath(
             dp_id=dp_id, faucet_dp_mac=mac, hardware='Generic',
             lacp_timeout=5, lldp_beacon=lldp_beacon, interfaces=interfaces, stack=stack)
@@ -160,7 +160,7 @@ class FaucetConfigGenerator():
                 dp_index, dps=t1_dps, t2_dps=t2_dps, tagged_vlans=[setup_vlan],
                 tap_vlan=tap_vlan, egress_port=FAUCET_EGRESS_PORT, lacp=True)
             dps[dp_name] = self._build_datapath_config(
-                T1_DP_ID_START + dp_index, interfaces, self._generate_dp_mac(T1_DP, dp_index))
+                T1_DP_ID_START + dp_index, interfaces, self._generate_dp_mac(T1_DP, dp_index), root=True)
 
         for dp_index, dp_name in enumerate(t2_dps):
             interfaces = self._build_dp_interfaces(
@@ -183,7 +183,7 @@ class FaucetConfigGenerator():
                 access_ports=num_access_ports, native_vlan=setup_vlan, port_acl='uniform_acl',
                 access_port_start=FLAT_ACCESS_PORT_START, lacp=True)
             dps[sw_name] = self._build_datapath_config(
-                FLAT_DP_ID_START + sw_num, interfaces, self._generate_dp_mac(T2_DP, sw_num))
+                FLAT_DP_ID_START + sw_num, interfaces, self._generate_dp_mac(T2_DP, sw_num), root=True)
 
         return FaucetConfig(dps=dps, version=2, include=['uniform.yaml'], vlans=vlans)
 
